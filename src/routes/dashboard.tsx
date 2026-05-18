@@ -13,8 +13,8 @@ import { useAuthStore } from "@/lib/auth-store";
 import {
   useAddDevice, useDeleteDevice, useDevices, useUpdateDevice, type Device,
 } from "@/lib/hooks/useDevices";
-import { useEndSession, useSessions, useStartSession, type DeviceSession } from "@/lib/hooks/useSessions";
-import { usePairingCode } from "@/lib/hooks/usePairingCode";
+import { useEndSession, useSessions, useStartSession, useLiveLatency, type DeviceSession } from "@/lib/hooks/useSessions";
+import { usePairingCode, useRedeemPairingCode } from "@/lib/hooks/usePairingCode";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — DataNauts" }] }),
@@ -29,6 +29,7 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [section, setSection] = useState<Section>("overview");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | Device["status"]>("all");
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth/login" });
@@ -59,8 +60,8 @@ function Dashboard() {
       <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
         <Topbar onMenu={() => setSidebarOpen(true)} search={search} setSearch={setSearch} />
         <div style={{ flex: 1, padding: "24px clamp(16px, 3vw, 32px)" }}>
-          {section === "overview" && <Overview search={search} />}
-          {section === "devices" && <DevicesView search={search} />}
+          {section === "overview" && <Overview search={search} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />}
+          {section === "devices" && <DevicesView search={search} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />}
           {section === "activity" && <ActivityView search={search} />}
           {section === "settings" && <SettingsView />}
         </div>
@@ -111,12 +112,12 @@ function SidebarContent({ section, setSection }: { section: Section; setSection:
           return (
             <button key={id} onClick={() => setSection(id)} style={{
               display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8,
-              background: active ? "rgba(255,122,0,0.1)" : "transparent",
+              background: active ? "rgba(236,72,153,0.12)" : "transparent",
               color: active ? "#fff" : "var(--muted)",
               border: "none", cursor: "pointer", fontSize: 14, fontWeight: 500, textAlign: "left",
-              transition: "background 120ms ease, color 120ms ease",
+              transition: "background 80ms linear, color 80ms linear",
             }}>
-              <Icon size={16} color={active ? "var(--orange)" : "currentColor"} />
+              <Icon size={16} color={active ? "var(--pink)" : "currentColor"} />
               {label}
             </button>
           );
@@ -124,7 +125,7 @@ function SidebarContent({ section, setSection }: { section: Section; setSection:
       </nav>
       <div style={{ padding: 12, borderTop: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 8, background: "var(--surface-2)" }}>
-          <div style={{ width: 30, height: 30, borderRadius: 999, background: "var(--orange)", color: "#0b0b0b", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>{initial}</div>
+          <div style={{ width: 30, height: 30, borderRadius: 999, background: "var(--gradient-primary)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>{initial}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {user?.user_metadata?.display_name || user?.email}
@@ -176,7 +177,7 @@ function Topbar({ onMenu, search, setSearch }: { onMenu: () => void; search: str
           display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "1px solid var(--border)",
           borderRadius: 8, padding: "4px 8px 4px 4px", cursor: "pointer", color: "#fff",
         }}>
-          <span style={{ width: 24, height: 24, borderRadius: 999, background: "var(--orange)", color: "#0b0b0b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>{initial}</span>
+          <span style={{ width: 24, height: 24, borderRadius: 999, background: "var(--gradient-primary)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700 }}>{initial}</span>
           <span className="dn-search-label" style={{ fontSize: 13, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {user?.user_metadata?.display_name || user?.email}
           </span>
@@ -194,20 +195,51 @@ function Topbar({ onMenu, search, setSearch }: { onMenu: () => void; search: str
   );
 }
 
-function filterDevices(list: Device[], q: string) {
+function filterDevices(list: Device[], q: string, status: "all" | Device["status"] = "all") {
   const s = q.trim().toLowerCase();
-  if (!s) return list;
-  return list.filter((d) => d.name.toLowerCase().includes(s) || d.os.toLowerCase().includes(s) || d.status.includes(s));
+  return list.filter((d) => {
+    if (status !== "all" && d.status !== status) return false;
+    if (!s) return true;
+    return d.name.toLowerCase().includes(s) || d.os.toLowerCase().includes(s) || d.status.includes(s) || d.type.includes(s);
+  });
+}
+
+function StatusFilter({ value, onChange }: { value: "all" | Device["status"]; onChange: (v: "all" | Device["status"]) => void }) {
+  const opts: { v: "all" | Device["status"]; label: string }[] = [
+    { v: "all", label: "All" },
+    { v: "online", label: "Online" },
+    { v: "idle", label: "Idle" },
+    { v: "offline", label: "Offline" },
+  ];
+  return (
+    <div style={{ display: "inline-flex", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 2 }}>
+      {opts.map((o) => (
+        <button key={o.v} onClick={() => onChange(o.v)} style={{
+          padding: "4px 10px", fontSize: 12, fontWeight: 500, border: "none", borderRadius: 6, cursor: "pointer",
+          background: value === o.v ? "var(--surface)" : "transparent",
+          color: value === o.v ? "#fff" : "var(--muted)",
+          transition: "background 80ms linear, color 80ms linear",
+        }}>{o.label}</button>
+      ))}
+    </div>
+  );
 }
 
 /* ---------- Overview ---------- */
-function Overview({ search }: { search: string }) {
+function Overview({ search, statusFilter, setStatusFilter }: { search: string; statusFilter: "all" | Device["status"]; setStatusFilter: (s: "all" | Device["status"]) => void }) {
   const user = useAuthStore((s) => s.user);
   const { data: devices = [], isLoading: dLoading, error: dError } = useDevices();
-  const { data: sessions = [], isLoading: sLoading } = useSessions();
+  const { data: sessions = [], isLoading: sLoading, error: sError } = useSessions();
   const [addOpen, setAddOpen] = useState(false);
+  const [pairOpen, setPairOpen] = useState(false);
 
-  const visibleDevices = useMemo(() => filterDevices(devices, search), [devices, search]);
+  const visibleDevices = useMemo(() => filterDevices(devices, search, statusFilter), [devices, search, statusFilter]);
+
+  const activeDeviceIds = useMemo(
+    () => sessions.filter((s) => !s.ended_at).map((s) => s.device_id),
+    [sessions]
+  );
+  useLiveLatency(activeDeviceIds);
 
   const online = devices.filter((d) => d.status === "online");
   const avgLatency = online.length ? Math.round(online.reduce((a, d) => a + d.latency_ms, 0) / online.length) : 0;
@@ -223,7 +255,10 @@ function Overview({ search }: { search: string }) {
             Welcome back, {user?.user_metadata?.display_name || user?.email?.split("@")[0]}.
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setAddOpen(true)}><Plus size={14} /> Add device</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-secondary" onClick={() => setPairOpen(true)}><QrCode size={14} /> Pair with code</button>
+          <button className="btn-primary" onClick={() => setAddOpen(true)}><Plus size={14} /> Add device</button>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
@@ -234,14 +269,17 @@ function Overview({ search }: { search: string }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
-        <QuickConnect />
-        <RecentSessions sessions={sessions} devices={devices} loading={sLoading} />
+        <QuickConnect onOpenPair={() => setPairOpen(true)} />
+        <RecentSessions sessions={sessions} devices={devices} loading={sLoading} error={sError as Error | null} />
       </div>
 
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottom: "1px solid var(--border)" }}>
           <h3 className="h3">Your devices</h3>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>{visibleDevices.length} of {devices.length}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>{visibleDevices.length} of {devices.length}</span>
+          </div>
         </div>
         <div style={{ overflowX: "auto" }}>
           <DeviceTable devices={visibleDevices} loading={dLoading} error={dError as Error | null} onAdd={() => setAddOpen(true)} />
@@ -249,6 +287,7 @@ function Overview({ search }: { search: string }) {
       </div>
 
       {addOpen && <AddDeviceModal onClose={() => setAddOpen(false)} />}
+      {pairOpen && <PairCodeModal onClose={() => setPairOpen(false)} />}
     </div>
   );
 }
@@ -264,41 +303,51 @@ function StatCard({ label, value, delta, tint }: { label: string; value: string;
 }
 
 /* ---------- Quick connect (QR pairing) ---------- */
-function QuickConnect() {
-  const { code, remaining, ttl, copied, regenerate, copy } = usePairingCode();
+function QuickConnect({ onOpenPair }: { onOpenPair: () => void }) {
+  const { code, remaining, ttl, copied, loading, regenerate, copy } = usePairingCode();
   const pct = (remaining / ttl) * 100;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&bgcolor=ffffff&color=0a0b14&data=${encodeURIComponent(`datanauts://pair?code=${code}`)}`;
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h3 className="h3">Quick connect</h3>
-        <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "JetBrains Mono" }}>EXPIRES IN {remaining}s</span>
+        <span style={{ fontSize: 11, color: remaining < 10 ? "var(--pink)" : "var(--muted)", fontFamily: "JetBrains Mono" }}>
+          {loading ? "ISSUING…" : `EXPIRES IN ${remaining}s`}
+        </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: 14, border: "1px dashed var(--border-strong)", borderRadius: 10 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <QrCode size={48} color="#0b0b0b" />
+        <div style={{ width: 80, height: 80, borderRadius: 8, background: "#fff", padding: 4, flexShrink: 0, display: "grid", placeItems: "center" }}>
+          {loading ? (
+            <QrCode size={40} color="#0a0b14" />
+          ) : (
+            <img src={qrSrc} alt={`QR code for ${code}`} width={72} height={72} style={{ display: "block" }} />
+          )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ color: "#fff", fontFamily: "JetBrains Mono", fontSize: 18, fontWeight: 600, letterSpacing: "0.05em" }}>{code}</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Enter this on your phone to pair</div>
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button className="btn-ghost-sm" style={{ padding: "4px 8px" }} onClick={copy}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>Scan from phone, or enter manually to pair.</div>
+          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+            <button className="btn-ghost-sm" style={{ padding: "4px 8px" }} onClick={copy} disabled={loading}>
               {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
             </button>
-            <button className="btn-ghost-sm" style={{ padding: "4px 8px" }} onClick={regenerate}>
+            <button className="btn-ghost-sm" style={{ padding: "4px 8px" }} onClick={regenerate} disabled={loading}>
               <RefreshCw size={12} /> New code
+            </button>
+            <button className="btn-ghost-sm" style={{ padding: "4px 8px", color: "var(--blue)" }} onClick={onOpenPair}>
+              Enter code →
             </button>
           </div>
         </div>
       </div>
       <div style={{ height: 3, background: "var(--surface-2)", borderRadius: 999, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: "var(--orange)", transition: "width 1s linear" }} />
+        <div style={{ height: "100%", width: `${pct}%`, background: remaining < 10 ? "var(--pink)" : "var(--orange)", transition: "width 1s linear" }} />
       </div>
     </div>
   );
 }
 
-function RecentSessions({ sessions, devices, loading }: { sessions: DeviceSession[]; devices: Device[]; loading: boolean }) {
+function RecentSessions({ sessions, devices, loading, error }: { sessions: DeviceSession[]; devices: Device[]; loading: boolean; error: Error | null }) {
   const recent = sessions.slice(0, 5);
   const nameFor = (id: string) => devices.find((d) => d.id === id)?.name ?? "Unknown device";
   return (
@@ -309,12 +358,17 @@ function RecentSessions({ sessions, devices, loading }: { sessions: DeviceSessio
       </div>
       <div style={{ marginTop: 14, display: "flex", flexDirection: "column" }}>
         {loading && <SkeletonRows />}
-        {!loading && recent.length === 0 && (
+        {!loading && error && (
+          <div style={{ fontSize: 13, color: "#ef4444", padding: "16px 0", textAlign: "center" }}>
+            Couldn't load sessions: {error.message}
+          </div>
+        )}
+        {!loading && !error && recent.length === 0 && (
           <div style={{ fontSize: 13, color: "var(--muted)", padding: "16px 0", textAlign: "center" }}>
             No sessions yet. Start one from the Devices tab.
           </div>
         )}
-        {recent.map((s, i) => (
+        {!error && recent.map((s, i) => (
           <div key={s.id} style={{
             display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 12,
             padding: "10px 0", borderBottom: i < recent.length - 1 ? "1px solid var(--border)" : "none",
@@ -570,11 +624,80 @@ function AddDeviceModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* ---------- Pair-with-code modal ---------- */
+function PairCodeModal({ onClose }: { onClose: () => void }) {
+  const redeem = useRedeemPairingCode();
+  const [code, setCode] = useState("");
+  const [deviceName, setDeviceName] = useState("");
+  const [os, setOs] = useState("iOS");
+  const [type, setType] = useState<"desktop" | "mobile">("mobile");
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!code.trim() || !deviceName.trim()) return;
+    try {
+      await redeem.mutateAsync({ code, deviceName, os, type });
+      toast.success(`Paired ${deviceName}`);
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 70, display: "grid", placeItems: "center", padding: 16 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={onSubmit}
+        className="card" style={{ width: "100%", maxWidth: 420, padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 className="h3">Pair with code</h3>
+          <button type="button" className="btn-ghost-sm" onClick={onClose} style={{ padding: 4 }} aria-label="Close"><X size={16} /></button>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+          Enter the 8-character code shown in Quick Connect (e.g. <span style={{ fontFamily: "JetBrains Mono", color: "var(--pink)" }}>ABCD-1234</span>).
+        </p>
+        <label style={{ fontSize: 12, color: "var(--muted)" }}>Pairing code
+          <input className="input-field" placeholder="ABCD-1234" value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            autoFocus maxLength={9} style={{ marginTop: 4, fontFamily: "JetBrains Mono", letterSpacing: "0.08em" }} />
+        </label>
+        <label style={{ fontSize: 12, color: "var(--muted)" }}>Device name
+          <input className="input-field" placeholder="e.g. iPhone 15" value={deviceName} onChange={(e) => setDeviceName(e.target.value)} style={{ marginTop: 4 }} />
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <label style={{ fontSize: 12, color: "var(--muted)" }}>Type
+            <select className="input-field" value={type} onChange={(e) => setType(e.target.value as "desktop" | "mobile")} style={{ marginTop: 4 }}>
+              <option value="mobile">Mobile</option>
+              <option value="desktop">Desktop</option>
+            </select>
+          </label>
+          <label style={{ fontSize: 12, color: "var(--muted)" }}>OS
+            <select className="input-field" value={os} onChange={(e) => setOs(e.target.value)} style={{ marginTop: 4 }}>
+              <option>iOS</option>
+              <option>Android</option>
+              <option>macOS</option>
+              <option>Windows 11</option>
+              <option>Windows 10</option>
+              <option>Ubuntu</option>
+            </select>
+          </label>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button type="button" className="btn-secondary btn-full" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary btn-full" disabled={redeem.isPending || !code.trim() || !deviceName.trim()}>
+            {redeem.isPending ? "Pairing…" : "Pair device"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 /* ---------- Devices view ---------- */
-function DevicesView({ search }: { search: string }) {
+function DevicesView({ search, statusFilter, setStatusFilter }: { search: string; statusFilter: "all" | Device["status"]; setStatusFilter: (s: "all" | Device["status"]) => void }) {
   const { data: devices = [], isLoading, error } = useDevices();
   const [addOpen, setAddOpen] = useState(false);
-  const visible = useMemo(() => filterDevices(devices, search), [devices, search]);
+  const [pairOpen, setPairOpen] = useState(false);
+  const visible = useMemo(() => filterDevices(devices, search, statusFilter), [devices, search, statusFilter]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -582,31 +705,42 @@ function DevicesView({ search }: { search: string }) {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff" }}>Devices</h1>
           <p style={{ fontSize: 14, color: "var(--muted)", marginTop: 2 }}>
-            {isLoading ? "Loading…" : `${visible.length} of ${devices.length} devices${search ? " (filtered)" : ""}`}
+            {isLoading ? "Loading…" : `${visible.length} of ${devices.length} devices${search || statusFilter !== "all" ? " (filtered)" : ""}`}
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setAddOpen(true)}><Plus size={14} /> Add device</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-secondary" onClick={() => setPairOpen(true)}><QrCode size={14} /> Pair with code</button>
+          <button className="btn-primary" onClick={() => setAddOpen(true)}><Plus size={14} /> Add device</button>
+        </div>
       </div>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>
+          <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+        </div>
         <div style={{ overflowX: "auto" }}>
           <DeviceTable devices={visible} loading={isLoading} error={error as Error | null} onAdd={() => setAddOpen(true)} />
         </div>
       </div>
       {addOpen && <AddDeviceModal onClose={() => setAddOpen(false)} />}
+      {pairOpen && <PairCodeModal onClose={() => setPairOpen(false)} />}
     </div>
   );
 }
 
 /* ---------- Activity ---------- */
 function ActivityView({ search }: { search: string }) {
-  const { data: sessions = [], isLoading } = useSessions();
+  const { data: sessions = [], isLoading, error } = useSessions();
   const { data: devices = [] } = useDevices();
   const nameFor = (id: string) => devices.find((d) => d.id === id)?.name ?? "Unknown";
 
   const visible = useMemo(() => {
     const s = search.trim().toLowerCase();
     if (!s) return sessions;
-    return sessions.filter((x) => nameFor(x.device_id).toLowerCase().includes(s));
+    return sessions.filter((x) => {
+      const name = nameFor(x.device_id).toLowerCase();
+      const state = x.ended_at ? "closed" : "live";
+      return name.includes(s) || state.includes(s) || String(x.latency_ms).includes(s);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessions, devices, search]);
 
@@ -620,7 +754,12 @@ function ActivityView({ search }: { search: string }) {
       </div>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         {isLoading && <div style={{ padding: 16 }}><SkeletonRows /></div>}
-        {!isLoading && visible.length === 0 && (
+        {!isLoading && error && (
+          <div style={{ padding: 24, fontSize: 13, color: "#ef4444", textAlign: "center" }}>
+            Couldn't load activity: {error.message}
+          </div>
+        )}
+        {!isLoading && !error && visible.length === 0 && (
           <div style={{ padding: "32px 24px", textAlign: "center" }}>
             <Activity size={28} color="var(--muted)" style={{ margin: "0 auto" }} />
             <div style={{ color: "#fff", marginTop: 12, fontWeight: 500 }}>No activity{search ? " matches your search" : " yet"}</div>
@@ -629,7 +768,7 @@ function ActivityView({ search }: { search: string }) {
             </div>
           </div>
         )}
-        {!isLoading && visible.length > 0 && (
+        {!isLoading && !error && visible.length > 0 && (
           <div style={{ overflowX: "auto" }}>
             <table className="tbl">
               <thead>

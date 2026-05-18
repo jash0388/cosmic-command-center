@@ -56,11 +56,11 @@
   --orange-hover: #ff8c1f;
   --green: #22c55e;
   --blue: #3b82f6;
-  --purple: #a855f7;
   --pink: #ec4899;
   --cyan: #06b6d4;
   --yellow: #eab308;
-  --gradient-primary: linear-gradient(135deg, #ff7a00 0%, #ec4899 50%, #a855f7 100%);
+  --red: #ef4444;
+  --gradient-primary: linear-gradient(135deg, #ff7a00 0%, #ec4899 60%, #f97316 100%);
   --gradient-cool: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -117,8 +117,8 @@ html, body {
   text-decoration: none;
   transition: background 80ms linear, border-color 80ms linear;
 }
-.btn-secondary:hover { background: rgba(168,85,247,0.08); border-color: var(--purple); }
-.btn-secondary:active { background: rgba(168,85,247,0.16); }
+.btn-secondary:hover { background: rgba(59,130,246,0.08); border-color: var(--blue); }
+.btn-secondary:active { background: rgba(59,130,246,0.16); }
 .btn-secondary.btn-lg { padding: 13px 22px; font-size: 15px; }
 .btn-secondary.btn-full { width: 100%; }
 
@@ -140,7 +140,7 @@ html, body {
   transition: border-color 100ms linear, background 100ms linear;
 }
 .card.interactive:hover {
-  border-color: var(--purple);
+  border-color: var(--pink);
   background: var(--surface-2);
 }
 
@@ -192,7 +192,6 @@ html, body {
 .text-orange { color: var(--orange); }
 .text-green { color: var(--green); }
 .text-blue { color: var(--blue); }
-.text-purple { color: var(--purple); }
 .text-pink { color: var(--pink); }
 .text-cyan { color: var(--cyan); }
 .text-yellow { color: var(--yellow); }
