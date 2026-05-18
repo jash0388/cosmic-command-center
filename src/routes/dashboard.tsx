@@ -624,6 +624,74 @@ function AddDeviceModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* ---------- Pair-with-code modal ---------- */
+function PairCodeModal({ onClose }: { onClose: () => void }) {
+  const redeem = useRedeemPairingCode();
+  const [code, setCode] = useState("");
+  const [deviceName, setDeviceName] = useState("");
+  const [os, setOs] = useState("iOS");
+  const [type, setType] = useState<"desktop" | "mobile">("mobile");
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!code.trim() || !deviceName.trim()) return;
+    try {
+      await redeem.mutateAsync({ code, deviceName, os, type });
+      toast.success(`Paired ${deviceName}`);
+      onClose();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 70, display: "grid", placeItems: "center", padding: 16 }}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={onSubmit}
+        className="card" style={{ width: "100%", maxWidth: 420, padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 className="h3">Pair with code</h3>
+          <button type="button" className="btn-ghost-sm" onClick={onClose} style={{ padding: 4 }} aria-label="Close"><X size={16} /></button>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+          Enter the 8-character code shown in Quick Connect (e.g. <span style={{ fontFamily: "JetBrains Mono", color: "var(--pink)" }}>ABCD-1234</span>).
+        </p>
+        <label style={{ fontSize: 12, color: "var(--muted)" }}>Pairing code
+          <input className="input-field" placeholder="ABCD-1234" value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            autoFocus maxLength={9} style={{ marginTop: 4, fontFamily: "JetBrains Mono", letterSpacing: "0.08em" }} />
+        </label>
+        <label style={{ fontSize: 12, color: "var(--muted)" }}>Device name
+          <input className="input-field" placeholder="e.g. iPhone 15" value={deviceName} onChange={(e) => setDeviceName(e.target.value)} style={{ marginTop: 4 }} />
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <label style={{ fontSize: 12, color: "var(--muted)" }}>Type
+            <select className="input-field" value={type} onChange={(e) => setType(e.target.value as "desktop" | "mobile")} style={{ marginTop: 4 }}>
+              <option value="mobile">Mobile</option>
+              <option value="desktop">Desktop</option>
+            </select>
+          </label>
+          <label style={{ fontSize: 12, color: "var(--muted)" }}>OS
+            <select className="input-field" value={os} onChange={(e) => setOs(e.target.value)} style={{ marginTop: 4 }}>
+              <option>iOS</option>
+              <option>Android</option>
+              <option>macOS</option>
+              <option>Windows 11</option>
+              <option>Windows 10</option>
+              <option>Ubuntu</option>
+            </select>
+          </label>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button type="button" className="btn-secondary btn-full" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary btn-full" disabled={redeem.isPending || !code.trim() || !deviceName.trim()}>
+            {redeem.isPending ? "Pairing…" : "Pair device"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 /* ---------- Devices view ---------- */
 function DevicesView({ search, statusFilter, setStatusFilter }: { search: string; statusFilter: "all" | Device["status"]; setStatusFilter: (s: "all" | Device["status"]) => void }) {
   const { data: devices = [], isLoading, error } = useDevices();
