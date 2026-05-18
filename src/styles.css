@@ -185,13 +185,10 @@ html, body {
 .text-green { color: var(--green); }
 .text-muted { color: var(--muted); }
 
-/* Reveal */
-.reveal {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 220ms var(--ease), transform 220ms var(--ease);
-}
-.reveal.in-view { opacity: 1; transform: none; }
+/* Reveal — content is visible by default; the .in-view class is just a no-op
+   so nothing stays hidden if the IntersectionObserver never fires (SSR,
+   reduced motion, short viewports, etc). */
+.reveal { opacity: 1; transform: none; }
 
 .section { max-width: 1200px; margin: 0 auto; padding: 96px 24px; position: relative; }
 @media (max-width: 768px) { .section { padding: 64px 20px; } }
