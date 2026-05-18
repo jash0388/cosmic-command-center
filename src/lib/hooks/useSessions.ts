@@ -81,18 +81,40 @@ export function useEndSession() {
   return useMutation({
     mutationFn: async (input: { sessionId: string; deviceId: string; startedAt: string }) => {
       const duration = Math.max(1, Math.round((Date.now() - new Date(input.startedAt).getTime()) / 1000));
-      await supabase
+      const { error: sErr } = await supabase
         .from("sessions")
         .update({ ended_at: new Date().toISOString(), duration_seconds: duration })
         .eq("id", input.sessionId);
-      await supabase
+      if (sErr) throw sErr;
+      const { error: dErr } = await supabase
         .from("devices")
-        .update({ status: "idle", last_seen_at: new Date().toISOString() })
+        .update({ status: "offline", last_seen_at: new Date().toISOString() })
         .eq("id", input.deviceId);
+      if (dErr) throw dErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
       qc.invalidateQueries({ queryKey: ["devices"] });
     },
   });
+}
+
+/**
+ * Periodically refreshes latency on an active session + its device,
+ * simulating live RTT measurements while connected.
+ */
+export function useLiveLatency(activeDeviceIds: string[]) {
+  useEffect(() => {
+    if (activeDeviceIds.length === 0) return;
+    const t = setInterval(async () => {
+      for (const id of activeDeviceIds) {
+        const latency = 12 + Math.floor(Math.random() * 60);
+        await supabase
+          .from("devices")
+          .update({ latency_ms: latency, last_seen_at: new Date().toISOString() })
+          .eq("id", id);
+      }
+    }, 5000);
+    return () => clearInterval(t);
+  }, [activeDeviceIds.join(",")]);
 }
