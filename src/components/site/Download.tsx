@@ -1,71 +1,42 @@
 import { useReveal } from "@/hooks/useReveal";
-import { Apple, Info } from "lucide-react";
+import { Apple, Smartphone, Monitor } from "lucide-react";
 
-function WindowsIcon({ size = 40, color = "#4f8ef7" }: { size?: number; color?: string }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3 5.5L10 4.5V11.5H3V5.5ZM11 4.3L21 3V11.5H11V4.3ZM3 12.5H10V19.5L3 18.5V12.5ZM11 12.5H21V21L11 19.7V12.5Z"/></svg>;
-}
-function AndroidIcon({ size = 40 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="#4ade80"><path d="M17.6 9.48l1.84-3.18a.4.4 0 00-.69-.4l-1.87 3.23a11.46 11.46 0 00-9.76 0L5.25 5.9a.4.4 0 10-.69.4L6.4 9.48A11.05 11.05 0 001 18.4h22a11.05 11.05 0 00-5.4-8.92zM7 15.5a1 1 0 110-2 1 1 0 010 2zm10 0a1 1 0 110-2 1 1 0 010 2z"/></svg>;
+function WindowsIcon({ size = 22 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10 4.5V11.5H3V5.5ZM11 4.3L21 3V11.5H11V4.3ZM3 12.5H10V19.5L3 18.5V12.5ZM11 12.5H21V21L11 19.7V12.5Z"/></svg>;
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{
-      display: "inline-block",
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.1)",
-      borderRadius: 999,
-      padding: "5px 12px",
-      fontFamily: "JetBrains Mono", fontSize: 11,
-      color: "rgba(240,240,255,0.65)",
-      marginTop: 12,
-    }}>{children}</span>
-  );
-}
-
-function Card({ icon, title, sub, badge, btn, note }: any) {
-  return (
-    <div className="glass-card hoverable reveal" style={{ padding: 40, display: "flex", flexDirection: "column" }}>
-      <div style={{ marginBottom: 18 }}>{icon}</div>
-      <h3 style={{ fontFamily: "Syne", fontWeight: 700, fontSize: 19, color: "#fff" }}>{title}</h3>
-      <div style={{ marginTop: 6, fontFamily: "DM Sans", fontSize: 13, color: "rgba(240,240,255,0.5)" }}>{sub}</div>
-      <Badge>{badge}</Badge>
-      <div style={{ flex: 1 }} />
-      <a href="#" className="btn-primary btn-full" style={{ marginTop: 24 }}>{btn}</a>
-      <div style={{ marginTop: 14, fontFamily: "DM Sans", fontSize: 12, color: "rgba(240,240,255,0.4)", fontStyle: "italic" }}>{note}</div>
-    </div>
-  );
-}
+const APPS = [
+  { Icon: WindowsIcon, title: "Windows", meta: "Windows 10/11 · 4.8 MB", cta: "Download .exe" },
+  { Icon: Apple, title: "macOS", meta: "12+ · Apple Silicon + Intel", cta: "Download .dmg" },
+  { Icon: Smartphone, title: "iOS", meta: "iPhone + iPad · iOS 15+", cta: "App Store" },
+  { Icon: Monitor, title: "Android", meta: "Phone + Tablet · 9.0+", cta: "Google Play" },
+];
 
 export function Download() {
   const ref = useReveal<HTMLDivElement>();
   return (
     <section id="download" className="section" ref={ref}>
-      <div className="text-center reveal">
-        <span className="mono-label">Downloads</span>
-        <h2 className="h2" style={{ color: "#fff" }}>Available on <span className="text-grad">every platform.</span></h2>
-        <p style={{ marginTop: 18, fontFamily: "DM Sans", fontSize: 17, color: "rgba(240,240,255,0.5)" }}>
-          One account. Every device you own.
-        </p>
+      <div className="reveal">
+        <span className="eyebrow">Downloads</span>
+        <h2 className="h2">Available on every platform.</h2>
+        <p style={{ marginTop: 12, fontSize: 16, color: "var(--muted)" }}>One account. Every device you own.</p>
       </div>
 
       <div style={{
-        marginTop: 56,
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: 20,
+        marginTop: 40,
+        display: "grid", gap: 12,
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
       }}>
-        <Card icon={<WindowsIcon />} title="DataNauts for Windows" sub="Windows 10 / 11 · 64-bit" badge="v1.2.0 · 4.8 MB" btn="Download .exe →" note="Runs silently in background. No restart needed." />
-        <Card icon={<Apple size={40} color="rgba(240,240,255,0.8)" />} title="DataNauts for Mac" sub="macOS 12 Monterey and above" badge="v1.2.0 · 6.1 MB · M1/M2/M3 + Intel" btn="Download .dmg →" note="Native Apple Silicon + Intel support." />
-        <Card icon={<Apple size={40} color="#4f8ef7" />} title="DataNauts for iPhone" sub="iOS 15 and above" badge="iPhone + iPad" btn="App Store →" note="Optimized for touch. Works on iPad too." />
-        <Card icon={<AndroidIcon />} title="DataNauts for Android" sub="Android 9.0 and above" badge="Phone + Tablet" btn="Google Play →" note="Works on phones and all Android tablets." />
-      </div>
-
-      <div className="glass-card reveal" style={{ marginTop: 28, padding: 24, display: "flex", alignItems: "flex-start", gap: 14 }}>
-        <Info size={20} color="#6ee7f7" style={{ flexShrink: 0, marginTop: 2 }} />
-        <p style={{ fontFamily: "DM Sans", fontSize: 14, color: "rgba(240,240,255,0.55)", lineHeight: 1.6 }}>
-          Desktop Agent (Windows/Mac) installs on the computer you want to control. The Mobile App (iOS/Android) is what you use to control it from anywhere.
-        </p>
+        {APPS.map(({ Icon, title, meta, cta }) => (
+          <div key={title} className="card interactive reveal" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <Icon size={22} />
+            <div>
+              <div className="h3">{title}</div>
+              <div style={{ marginTop: 4, fontSize: 13, color: "var(--muted)" }}>{meta}</div>
+            </div>
+            <a href="#" className="btn-secondary btn-full" style={{ marginTop: "auto" }}>{cta}</a>
+          </div>
+        ))}
       </div>
     </section>
   );
