@@ -1,212 +1,145 @@
-import { useEffect, useRef } from "react";
-import { Apple, Smartphone } from "lucide-react";
-
-function Particles() {
-  const ref = useRef<HTMLCanvasElement | null>(null);
-  useEffect(() => {
-    const canvas = ref.current!;
-    const ctx = canvas.getContext("2d")!;
-    let raf = 0;
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * devicePixelRatio;
-      canvas.height = canvas.offsetHeight * devicePixelRatio;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-    const parts = Array.from({ length: 120 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.5 + 0.5,
-      vx: (Math.random() - 0.5) * 0.2 * devicePixelRatio,
-      vy: (Math.random() - 0.5) * 0.2 * devicePixelRatio,
-      a: Math.random() * 0.4 + 0.1,
-    }));
-    const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      parts.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * devicePixelRatio, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${p.a})`;
-        ctx.fill();
-      });
-      raf = requestAnimationFrame(tick);
-    };
-    tick();
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-  return (
-    <canvas
-      ref={ref}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }}
-      aria-hidden
-    />
-  );
-}
-
-function WindowsIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10 4.5V11.5H3V5.5ZM11 4.3L21 3V11.5H11V4.3ZM3 12.5H10V19.5L3 18.5V12.5ZM11 12.5H21V21L11 19.7V12.5Z"/></svg>
-  );
-}
+import { ArrowRight, Wifi, Activity, Monitor, Smartphone } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function Hero() {
   return (
-    <section
-      className="relative flex items-center justify-center text-center"
-      style={{ minHeight: "100vh", paddingTop: 120, paddingBottom: 60, overflow: "hidden" }}
-    >
-      <Particles />
-      <div className="relative mx-auto px-6" style={{ maxWidth: 860, zIndex: 2 }}>
-        <div
-          className="reveal in-view"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(79,142,247,0.08)",
-            border: "1px solid rgba(79,142,247,0.2)",
-            borderRadius: 999, padding: "8px 20px",
-            fontFamily: "JetBrains Mono", fontSize: 12, color: "#4f8ef7",
-            marginBottom: 32,
-          }}
-        >
-          ✦ Now available on Windows, Mac, iOS &amp; Android
+    <section style={{ position: "relative", paddingTop: 140, paddingBottom: 80 }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: 56, alignItems: "center",
+        }} className="hero-grid">
+          <div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "var(--surface)", border: "1px solid var(--border)",
+              borderRadius: 999, padding: "5px 12px", fontSize: 12, color: "var(--muted)",
+              marginBottom: 24,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--green)" }} />
+              v1.2 · Live across Windows, Mac, iOS &amp; Android
+            </div>
+
+            <h1 className="h-hero">
+              Remote control,<br />
+              <span style={{ color: "var(--orange)" }}>without the friction.</span>
+            </h1>
+
+            <p style={{ marginTop: 18, fontSize: 17, color: "var(--muted)", lineHeight: 1.6, maxWidth: 520 }}>
+              DataNauts lets you connect to your PC or Mac from any device. Scan a QR, you&apos;re in. Encrypted by default. No IP setup, no port forwarding.
+            </p>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
+              <Link to="/auth/register" className="btn-primary btn-lg">
+                Start free <ArrowRight size={16} />
+              </Link>
+              <Link to="/download" className="btn-secondary btn-lg">Download app</Link>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 28, color: "var(--muted)", fontSize: 13 }}>
+              <span>★★★★★</span>
+              <span>Trusted by 2,400+ teams</span>
+            </div>
+          </div>
+
+          <div style={{ minWidth: 0 }}>
+            <DashboardMock />
+          </div>
         </div>
-
-        <h1 className="h-hero">
-          <span style={{ color: "rgba(240,240,255,0.5)", fontWeight: 700, display: "block" }}>
-            Control your PC
-          </span>
-          <span style={{ display: "block" }}>
-            from <span className="text-grad">anywhere.</span>
-          </span>
-        </h1>
-
-        <p
-          className="mx-auto"
-          style={{
-            fontFamily: "DM Sans", fontWeight: 400, fontSize: 19,
-            color: "rgba(240,240,255,0.55)", lineHeight: 1.7,
-            maxWidth: 560, marginTop: 24,
-          }}
-        >
-          Scan a QR code and you're connected. No IP addresses, no complex setup. Just instant, encrypted remote access.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-4" style={{ marginTop: 48 }}>
-          <a href="/auth/register" className="btn-primary btn-lg">Start for Free →</a>
-          <a href="/download" className="btn-ghost btn-lg">Download the App</a>
-        </div>
-
-        <p style={{ marginTop: 20, fontFamily: "DM Sans", fontSize: 13, color: "rgba(240,240,255,0.35)" }}>
-          ★★★★★&nbsp;&nbsp;2,400+ teams use DataNauts daily
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center" style={{ gap: 10, marginTop: 40 }}>
-          <span className="pill"><WindowsIcon /> Windows</span>
-          <span className="pill"><Apple size={14} /> macOS</span>
-          <span className="pill"><Smartphone size={14} /> iOS</span>
-          <span className="pill">🤖 Android</span>
-        </div>
-
-        <DeviceMockup />
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+        }
+      `}</style>
     </section>
   );
 }
 
-function DeviceMockup() {
+function DashboardMock() {
   return (
-    <div
-      className="relative mx-auto"
-      style={{
-        width: "min(900px, 100%)",
-        marginTop: 80,
-        borderRadius: 24,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.02)",
-        backdropFilter: "blur(4px)",
-        WebkitBackdropFilter: "blur(4px)",
-        boxShadow:
-          "0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,142,247,0.1), 0 0 200px rgba(79,142,247,0.05)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Title bar */}
-      <div
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 20px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-          background: "rgba(255,255,255,0.015)",
-        }}
-      >
+    <div style={{
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
+      borderRadius: 14,
+      overflow: "hidden",
+      boxShadow: "0 30px 60px -20px rgba(0,0,0,0.5)",
+    }}>
+      {/* titlebar */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 14px", borderBottom: "1px solid var(--border)",
+        background: "#0e0e0e",
+      }}>
         <div style={{ display: "flex", gap: 6 }}>
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#ff5f57" }} />
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#febc2e" }} />
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#28c840" }} />
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: "#ff5f57" }} />
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: "#febc2e" }} />
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: "#28c840" }} />
         </div>
-        <div style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em" }}>
-          DATANAUTS · SESSION ACTIVE
+        <div style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--muted)" }}>
+          datanauts.app/devices
         </div>
         <div style={{ width: 40 }} />
       </div>
 
-      <div style={{ padding: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, textAlign: "left" }}>
-        {/* status panel */}
-        <div className="glass-card" style={{ padding: 22 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                width: 10, height: 10, borderRadius: "50%", background: "#4ade80",
-                boxShadow: "0 0 0 0 rgba(74,222,128,0.5)",
-                animation: "pulse-dot 2s infinite",
-              }}
-            />
-            <span style={{ fontFamily: "Syne", fontWeight: 700, fontSize: 15, color: "#fff" }}>Connected</span>
-          </div>
-          <div style={{ marginTop: 14, fontFamily: "DM Sans", fontSize: 13, color: "rgba(240,240,255,0.5)" }}>
-            JASHWANTH-DESKTOP
-          </div>
-          <div style={{ marginTop: 6, fontFamily: "JetBrains Mono", fontSize: 11, color: "rgba(240,240,255,0.35)", letterSpacing: "0.1em" }}>
-            10.0.42.118 · ENCRYPTED
-          </div>
-          <div style={{ marginTop: 18, display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontFamily: "Syne", fontWeight: 800, fontSize: 36, color: "#6ee7f7" }}>14</span>
-            <span style={{ fontFamily: "JetBrains Mono", fontSize: 12, color: "rgba(240,240,255,0.5)" }}>ms latency</span>
-          </div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* stat row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          <Stat label="Active" value="3" tint="var(--green)" />
+          <Stat label="Latency" value="14ms" />
+          <Stat label="Devices" value="5" />
         </div>
 
-        {/* control grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-          {["⌘", "⇧", "⌥", "↑", "↓", "↵"].map((k, i) => (
-            <div
-              key={i}
-              style={{
-                aspectRatio: "1",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 12,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "JetBrains Mono",
-                fontSize: 18,
-                color: "rgba(240,240,255,0.7)",
-              }}
-            >
-              {k}
-            </div>
-          ))}
+        {/* device list */}
+        <div style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden" }}>
+          <DeviceRow icon={<Monitor size={14} />} name="MAC-STUDIO" status="online" latency="12ms" />
+          <DeviceRow icon={<Monitor size={14} />} name="WIN-OFFICE" status="online" latency="44ms" />
+          <DeviceRow icon={<Smartphone size={14} />} name="iPhone 15" status="online" latency="18ms" last />
+        </div>
+
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 10,
+          background: "#0e0e0e",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--muted)", fontSize: 12 }}>
+            <Activity size={14} color="var(--orange)" />
+            Session active · MAC-STUDIO
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+            <Wifi size={14} color="var(--green)" /> <span style={{ color: "var(--green)" }}>Encrypted</span>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, tint }: { label: string; value: string; tint?: string }) {
+  return (
+    <div style={{ background: "#0e0e0e", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ fontSize: 11, color: "var(--muted)" }}>{label}</div>
+      <div style={{ marginTop: 2, fontSize: 18, fontWeight: 700, color: tint ?? "#fff" }}>{value}</div>
+    </div>
+  );
+}
+
+function DeviceRow({ icon, name, status, latency, last }: { icon: React.ReactNode; name: string; status: string; latency: string; last?: boolean }) {
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "auto 1fr auto auto", alignItems: "center", gap: 10,
+      padding: "10px 12px", borderBottom: last ? "none" : "1px solid var(--border)",
+      fontSize: 13,
+    }}>
+      <span style={{ color: "var(--muted)" }}>{icon}</span>
+      <span style={{ color: "#fff", fontWeight: 500 }}>{name}</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--green)", fontSize: 12 }}>
+        <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--green)" }} />
+        {status}
+      </span>
+      <span style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--muted)" }}>{latency}</span>
     </div>
   );
 }
