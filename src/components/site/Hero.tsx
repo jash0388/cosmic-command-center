@@ -27,7 +27,7 @@ export function Hero() {
             </h1>
 
             <p style={{ marginTop: 18, fontSize: 17, color: "var(--muted)", lineHeight: 1.6, maxWidth: 520 }}>
-              DataNauts lets you connect to your PC or Mac from any device. Scan a QR, you&apos;re in. Encrypted by default. No IP setup, no port forwarding.
+              DataNauts lets you connect to your PC or Mac from any device. Scan a QR, you're in. Encrypted by default. No IP setup, no port forwarding.
             </p>
 
             <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>

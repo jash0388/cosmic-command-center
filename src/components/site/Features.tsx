@@ -2,10 +2,10 @@ import { QrCode, Shield, Hand, Gauge, Monitor, Globe } from "lucide-react";
 import { useReveal } from "@/hooks/useReveal";
 
 const FEATURES = [
-  { Icon: QrCode, title: "Instant connect", body: "Scan a QR. No IP addresses or port forwarding. You&apos;re in." },
+  { Icon: QrCode, title: "Instant connect", body: "Scan a QR. No IP addresses or port forwarding. You're in." },
   { Icon: Shield, title: "End-to-end encrypted", body: "AES-256 tunnels. Screen data never touches our servers." },
   { Icon: Hand, title: "Touch-first controls", body: "Pinch, scroll and gesture controls built for thumbs." },
-  { Icon: Gauge, title: "Low latency", body: "Sub-50ms on Pro. Feels like you&apos;re at the keyboard." },
+  { Icon: Gauge, title: "Low latency", body: "Sub-50ms on Pro. Feels like you're at the keyboard." },
   { Icon: Monitor, title: "Cross-platform", body: "Windows, Mac, iOS, Android. One account everywhere." },
   { Icon: Globe, title: "Works anywhere", body: "Any network, any country, NAT-traversal handled for you." },
 ];
