@@ -21,9 +21,9 @@ A modern remote desktop / device control SaaS — connect, monitor and control y
   - **Quick Connect** — 8-char pairing code with 30s rotation
 
 ### Design system
-- Dark theme with white text, multi-color accents (orange, pink, purple, blue, cyan, green, yellow)
+- Dark theme with white text, multi-color accents (orange, pink, blue, cyan, green, yellow)
 - Tailwind v4 via `@import "tailwindcss"` in `src/styles.css`
-- Semantic tokens (`--bg`, `--surface`, `--text`, `--orange`, `--purple`, …) — never hardcode colors in components
+- Semantic tokens (`--bg`, `--surface`, `--text`, `--orange`, `--pink`, `--blue`, …) — never hardcode colors in components
 - Snappy button transitions (~80ms linear) so clicks feel instant
 - Fonts: DM Sans (UI) + JetBrains Mono (eyebrows / numbers)
 
