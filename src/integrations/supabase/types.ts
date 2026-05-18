@@ -14,7 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      devices: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          latency_ms: number
+          name: string
+          os: string
+          status: Database["public"]["Enums"]["device_status"]
+          type: Database["public"]["Enums"]["device_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          latency_ms?: number
+          name: string
+          os?: string
+          status?: Database["public"]["Enums"]["device_status"]
+          type?: Database["public"]["Enums"]["device_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          latency_ms?: number
+          name?: string
+          os?: string
+          status?: Database["public"]["Enums"]["device_status"]
+          type?: Database["public"]["Enums"]["device_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pairing_codes: {
+        Row: {
+          claimed: boolean
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          device_id: string
+          duration_seconds: number
+          ended_at: string | null
+          id: string
+          latency_ms: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          device_id: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          latency_ms?: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          duration_seconds?: number
+          ended_at?: string | null
+          id?: string
+          latency_ms?: number
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +141,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      device_status: "online" | "idle" | "offline"
+      device_type: "desktop" | "mobile"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +269,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      device_status: ["online", "idle", "offline"],
+      device_type: ["desktop", "mobile"],
+    },
   },
 } as const
